@@ -2,7 +2,7 @@
 
 #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++#
 #      Name: CronBackup                                                        #
-#   Version: 1.0 Beta ($Id)                                                    #
+#   Version: 1.0 Beta ($Id$)                                                   #
 #    Author: Jan Erik Zassenhaus (sisko1990@users.sourceforge.net)             #
 # Copyright: Copyright (C) 2010 Jan Erik Zassenhaus. All rights reserved.      #
 #   License: GNU/GPL, see LICENSE.txt                                          #
