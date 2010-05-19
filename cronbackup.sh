@@ -58,8 +58,7 @@ ARCHIVE_TYPE_DATABASE="Bzip2"
 
 ###################### BACKUP SETTINGS: COMPRESSION LEVEL ######################
 ## Provide here the level of compression for the archives.                    ##
-## Please note: This function is only available for "Zip" and                 ##
-##              "Gzip" compression!                                           ##
+## Please note: This function is not available for "Tar" compression!         ##
 ## Available levels: "1" till "9". To use system default enter "0".           ##
 ################################################################################
 COMPRESS_LEVEL_FILES="5"
@@ -205,7 +204,7 @@ createDatabaseBackup ()
     # Compress the dump into an archive
     echo -e "-> Create $ARCHIVE_TYPE_DATABASE archive of $DATABASE database(s)... \c"
     if [ $ARCHIVE_TYPE_DATABASE = "Zip" ]; then
-      $PZIP -q $(date +%F"_"%H"-"%M)".zip" $DATABASE".sql"
+      $PZIP -q $LEV $(date +%F"_"%H"-"%M)".zip" $DATABASE".sql"
     elif [ $ARCHIVE_TYPE_DATABASE = "Tar" ]; then
       $PTAR -cf $(date +%F"_"%H"-"%M)".tar" $DATABASE".sql"
     elif [ $ARCHIVE_TYPE_DATABASE = "Gzip" ]; then
@@ -247,7 +246,7 @@ createFilesBackup ()
   # Compress the files into an archive
   echo -e "-> Create $ARCHIVE_TYPE_FILES archive of $BACKUP_FILES... \c"
   if [ $ARCHIVE_TYPE_FILES = "Zip" ]; then
-    $PZIP -qr $BACKUP_PATH$BACKUP_PATH_FILES"/"$(date +%F"_"%H"-"%M)".zip" $BACKUP_FILES
+    $PZIP -qr $LEV $BACKUP_PATH$BACKUP_PATH_FILES"/"$(date +%F"_"%H"-"%M)".zip" $BACKUP_FILES
   elif [ $ARCHIVE_TYPE_FILES = "Tar" ]; then
     $PTAR -cf $BACKUP_PATH$BACKUP_PATH_FILES"/"$(date +%F"_"%H"-"%M)".tar" $BACKUP_FILES
   elif [ $ARCHIVE_TYPE_FILES = "Gzip" ]; then
@@ -292,17 +291,23 @@ if [ $BACKUP_TYPE = "Both" ]; then
   header
   createDatabaseBackup
   createFilesBackup
-  clean
+  if [ $CLEAN != "No" ]; then
+    clean
+  fi
   exit 0
 elif [ $BACKUP_TYPE = "Files" ]; then
   header
   createFilesBackup
-  clean
+  if [ $CLEAN != "No" ]; then
+    clean
+  fi
   exit 0
 elif [ $BACKUP_TYPE = "Database" ]; then
   header
   createDatabaseBackup
-  clean
+  if [ $CLEAN != "No" ]; then
+    clean
+  fi
   exit 0
 else
   header
