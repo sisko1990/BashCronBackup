@@ -53,7 +53,7 @@ BACKUP_PATH="/backup"
 ##              another for the database backup.                              ##
 ## Available types: "Zip", "Tar", "Gzip" or "Bzip2"                           ##
 ################################################################################
-ARCHIVE_TYPE_FILES="Zip"
+ARCHIVE_TYPE_FILES="Gzip"
 ARCHIVE_TYPE_DATABASE="Bzip2"
 
 ###################### BACKUP SETTINGS: COMPRESSION LEVEL ######################
@@ -109,7 +109,7 @@ BACKUP_PATH_DATABASE="/database"
 ## Please note: To define more folders, seperate each with a space:           ##
 ##              "htdocs/f1 htdocs/f2 logs"                                    ##
 ################################################################################
-BACKUP_FILES="html/joomla2"
+BACKUP_FILES="htdocs/folder"
 
 ############################## FILES: BACKUP PATH ##############################
 ## Where to save the files backup to.                                         ##
@@ -275,35 +275,37 @@ clean ()
 }
 ## Clean - END ##
 
-## Footer - START ##
-footer ()
+## Header - START ##
+header ()
 {
-  echo "+++ Backup process (\"$BACKUP_TYPE\") finished +++"
+  echo "########################################################################"
+  echo "###      BashCronBackup Copyright (C) 2010 Jan Erik Zassenhaus       ###"
+  echo "### This program comes with ABSOLUTELY NO WARRANTY! License: GNU/GPL ###"
+  echo -e "########################################################################\n"
 }
-## Footer - END ##
+## Header - END ##
 # Functions - END #
 
 
 # The programme logic and some output - START #
-echo -e "+++ Backup process (\"$BACKUP_TYPE\") started +++\n"
-
 if [ $BACKUP_TYPE = "Both" ]; then
+  header
   createDatabaseBackup
   createFilesBackup
   clean
-  footer
   exit 0
 elif [ $BACKUP_TYPE = "Files" ]; then
+  header
   createFilesBackup
   clean
-  footer
   exit 0
 elif [ $BACKUP_TYPE = "Database" ]; then
+  header
   createDatabaseBackup
   clean
-  footer
   exit 0
 else
+  header
   echo "ERROR!: The backup type seems wrong!"
   exit 1
 fi
