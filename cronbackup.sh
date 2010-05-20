@@ -155,6 +155,9 @@ createDatabaseBackup ()
     # Go into the path
     cd $BACKUP_PATH$BACKUP_PATH_DATABASE
     
+    # Create tmp folder
+    mkdir -p tmp
+    
     # Define the options for MySQLDump
     MYISAM="--add-drop-table --add-locks --create-options --disable-keys --extended-insert --lock-tables --quick --compress --set-charset"
     INNODB="--single-transaction --quick --compress --extended-insert"
@@ -173,27 +176,28 @@ createDatabaseBackup ()
     if [ $ENGINE = "MyISAM" ]; then
       if [ $DATABASE = "All" ]; then
         DATABASE="all_databases"
-        $PMYSQLDUMP $MYISAM $GENERAL --all-databases > $DATABASE".sql"
+        $PMYSQLDUMP $MYISAM $GENERAL --all-databases > "tmp/"$DATABASE".sql"
       else
-        $PMYSQLDUMP $MYISAM $GENERAL $DATABASE > $DATABASE".sql"
+        $PMYSQLDUMP $MYISAM $GENERAL $DATABASE > "tmp/"$DATABASE".sql"
       fi
     elif [ $ENGINE = "InnoDB" ]; then
       if [ $DATABASE = "All" ]; then
         DATABASE="all_databases"
-        $PMYSQLDUMP $INNODB $GENERAL --all-databases > $DATABASE".sql"
+        $PMYSQLDUMP $INNODB $GENERAL --all-databases > "tmp/"$DATABASE".sql"
       else
-        $PMYSQLDUMP $INNODB $GENERAL $DATABASE > $DATABASE".sql"
+        $PMYSQLDUMP $INNODB $GENERAL $DATABASE > "tmp/"$DATABASE".sql"
       fi
     else
       if [ $DATABASE = "All" ]; then
         DATABASE="all_databases"
-        $PMYSQLDUMP $NONE $GENERAL --all-databases > $DATABASE".sql"
+        $PMYSQLDUMP $NONE $GENERAL --all-databases > "tmp/"$DATABASE".sql"
       else
-        $PMYSQLDUMP $NONE $GENERAL $DATABASE > $DATABASE".sql"
+        $PMYSQLDUMP $NONE $GENERAL $DATABASE > "tmp/"$DATABASE".sql"
       fi
     fi
-    echo "OK!"
-    
+    echo -e "OK!\n"
+  done
+  
     # Set the correct compression level
     if [ $COMPRESS_LEVEL_DATABASE = "0" ]; then
       LEV=""
@@ -201,27 +205,32 @@ createDatabaseBackup ()
       LEV="-"$COMPRESS_LEVEL_DATABASE
     fi
     
+    # Go into the tmp path
+    cd tmp
+    
     # Compress the dump into an archive
     echo -e "-> Create $ARCHIVE_TYPE_DATABASE archive of $DATABASE database(s)... \c"
     if [ $ARCHIVE_TYPE_DATABASE = "Zip" ]; then
-      $PZIP -q $LEV $(date +%F"_"%H"-"%M)".zip" $DATABASE".sql"
+      $PZIP -q $LEV "../"$(date +%F"_"%H"-"%M)".zip" *
     elif [ $ARCHIVE_TYPE_DATABASE = "Tar" ]; then
-      $PTAR -cf $(date +%F"_"%H"-"%M)".tar" $DATABASE".sql"
+      $PTAR -cf "../"$(date +%F"_"%H"-"%M)".tar" *
     elif [ $ARCHIVE_TYPE_DATABASE = "Gzip" ]; then
-      $PTAR -cf - $DATABASE".sql" | $PGZIP $LEV > $(date +%F"_"%H"-"%M)".tar.gz"
+      $PTAR -cf - * | $PGZIP $LEV > "../"$(date +%F"_"%H"-"%M)".tar.gz"
     elif [ $ARCHIVE_TYPE_DATABASE = "Bzip2" ]; then
-      $PTAR -cf - $DATABASE".sql" | $PGZIP $LEV > $(date +%F"_"%H"-"%M)".tar.bz2"
+      $PTAR -cf - * | $PGZIP $LEV > "../"$(date +%F"_"%H"-"%M)".tar.bz2"
     else
       echo "ERROR!: The database archive type seems wrong!"
     fi
     echo -e "OK!\n"
     
-    # Delete the original SQL file
-    rm $DATABASE".sql"
+    # Go one dir up
+    cd ..
+    
+    # Delete the original SQL file(s)
+    rm -r tmp
     
     # Unset the $LEV var
     unset LEV
-  done
 }
 ## Database backup - END ##
 
