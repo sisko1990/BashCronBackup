@@ -150,13 +150,10 @@ createDatabaseBackup ()
     ENGINE=`echo $db | cut -d "|" -f5`
     
     # Create directory if it does not exist
-    mkdir -p $BACKUP_PATH$BACKUP_PATH_DATABASE
+    mkdir -p $BACKUP_PATH$BACKUP_PATH_DATABASE"/tmp"
     
     # Go into the path
-    cd $BACKUP_PATH$BACKUP_PATH_DATABASE
-    
-    # Create tmp folder
-    mkdir -p tmp
+    cd $BACKUP_PATH$BACKUP_PATH_DATABASE"/tmp"
     
     # Define the options for MySQLDump
     MYISAM="--add-drop-table --add-locks --create-options --disable-keys --extended-insert --lock-tables --quick --compress --set-charset"
@@ -176,23 +173,23 @@ createDatabaseBackup ()
     if [ $ENGINE = "MyISAM" ]; then
       if [ $DATABASE = "All" ]; then
         DATABASE="all_databases"
-        $PMYSQLDUMP $MYISAM $GENERAL --all-databases > "tmp/"$DATABASE".sql"
+        $PMYSQLDUMP $MYISAM $GENERAL --all-databases > $DATABASE".sql"
       else
-        $PMYSQLDUMP $MYISAM $GENERAL $DATABASE > "tmp/"$DATABASE".sql"
+        $PMYSQLDUMP $MYISAM $GENERAL $DATABASE > $DATABASE".sql"
       fi
     elif [ $ENGINE = "InnoDB" ]; then
       if [ $DATABASE = "All" ]; then
         DATABASE="all_databases"
-        $PMYSQLDUMP $INNODB $GENERAL --all-databases > "tmp/"$DATABASE".sql"
+        $PMYSQLDUMP $INNODB $GENERAL --all-databases > $DATABASE".sql"
       else
-        $PMYSQLDUMP $INNODB $GENERAL $DATABASE > "tmp/"$DATABASE".sql"
+        $PMYSQLDUMP $INNODB $GENERAL $DATABASE > $DATABASE".sql"
       fi
     else
       if [ $DATABASE = "All" ]; then
         DATABASE="all_databases"
-        $PMYSQLDUMP $NONE $GENERAL --all-databases > "tmp/"$DATABASE".sql"
+        $PMYSQLDUMP $NONE $GENERAL --all-databases > $DATABASE".sql"
       else
-        $PMYSQLDUMP $NONE $GENERAL $DATABASE > "tmp/"$DATABASE".sql"
+        $PMYSQLDUMP $NONE $GENERAL $DATABASE > $DATABASE".sql"
       fi
     fi
     echo -e "OK!\n"
@@ -205,11 +202,8 @@ createDatabaseBackup ()
       LEV="-"$COMPRESS_LEVEL_DATABASE
     fi
     
-    # Go into the tmp path
-    cd tmp
-    
     # Compress the dump into an archive
-    echo -e "-> Create $ARCHIVE_TYPE_DATABASE archive of $DATABASE database(s)... \c"
+    echo -e "-> Create $ARCHIVE_TYPE_DATABASE archive of database(s)... \c"
     if [ $ARCHIVE_TYPE_DATABASE = "Zip" ]; then
       $PZIP -q $LEV "../"$(date +%F"_"%H"-"%M)".zip" *
     elif [ $ARCHIVE_TYPE_DATABASE = "Tar" ]; then
@@ -228,9 +222,6 @@ createDatabaseBackup ()
     
     # Delete the original SQL file(s)
     rm -r tmp
-    
-    # Unset the $LEV var
-    unset LEV
 }
 ## Database backup - END ##
 
