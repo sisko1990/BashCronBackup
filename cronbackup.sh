@@ -58,7 +58,7 @@ ARCHIVE_TYPE_DATABASE="Bzip2"
 
 ###################### BACKUP SETTINGS: COMPRESSION LEVEL ######################
 ## Provide here the level of compression for the archives.                    ##
-## Please note: This function is not available for "Tar" compression!         ##
+## Please note: This function is not available for "Tar" archives!            ##
 ## Available levels: "1" till "9". To use system default enter "0".           ##
 ################################################################################
 COMPRESS_LEVEL_FILES="5"
@@ -127,12 +127,12 @@ BACKUP_PATH_FILES="/files"
 #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++#
 
 # Define some programmes
-PMYSQLDUMP=$(which mysqldump)
-PMYSQL=$(which mysql)
-PTAR=$(which tar)
-PZIP=$(which zip)
-PGZIP=$(which gzip)
-PBZIP2=$(which bzip2)
+PMYSQLDUMP=$(which mysqldump 2> /dev/null)
+PMYSQL=$(which mysql 2> /dev/null)
+PTAR=$(which tar 2> /dev/null)
+PZIP=$(which zip 2> /dev/null)
+PGZIP=$(which gzip 2> /dev/null)
+PBZIP2=$(which bzip2 2> /dev/null)
 
 
 # Functions - START #
@@ -221,7 +221,7 @@ createDatabaseBackup ()
     cd ..
     
     # Delete the original SQL file(s)
-    rm -r tmp
+    rm -rf tmp
 }
 ## Database backup - END ##
 
@@ -267,9 +267,9 @@ clean ()
   
   echo -e "-> Removing backups older than $CLEAN day(s)... \c"
   if [ $BACKUP_TYPE != "Files" ]; then
-    find $BACKUP_PATH$BACKUP_PATH_DATABASE"/" -mtime +$CLEAN | xargs rm -f
+    find $BACKUP_PATH$BACKUP_PATH_DATABASE"/" -mtime +$CLEAN -delete
   fi
-  find $BACKUP_PATH$BACKUP_PATH_FILES"/" -mtime +$CLEAN | xargs rm -f
+  find $BACKUP_PATH$BACKUP_PATH_FILES"/" -mtime +$CLEAN -delete
   echo -e "OK!\n"
 }
 ## Clean - END ##
