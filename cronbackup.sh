@@ -2,7 +2,7 @@
 
 #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++#
 #      Name: CronBackup                                                        #
-#   Version: 1.0 Beta ($Id$)  #
+#   Version: 1.0 ($Id$)       #
 #    Author: Jan Erik Zassenhaus (sisko1990@users.sourceforge.net)             #
 # Copyright: Copyright (C) 2010 Jan Erik Zassenhaus. All rights reserved.      #
 #   License: GNU/GPL, see LICENSE.txt                                          #
@@ -126,7 +126,7 @@ BACKUP_PATH_FILES="/files"
 #++++++++++++++++++++++++ UNLESS YOU KNOW WHAT YOU DO! ++++++++++++++++++++++++#
 #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++#
 
-# Define some programmes
+# Linux bin paths - Change them if it cannot be autodetected via "which" command
 PMYSQLDUMP=$(which mysqldump 2> /dev/null)
 PMYSQL=$(which mysql 2> /dev/null)
 PTAR=$(which tar 2> /dev/null)
@@ -161,38 +161,58 @@ createDatabaseBackup ()
     NONE="--add-drop-table --create-options --extended-insert --quick --compress --set-charset"
     GENERAL="-h$HOST -u$USERNAME -p$PASSWORD"
     
+    ### Database dump - START ###
+    createDatabaseDump()
+    {
+      DATABASE=$1
+      
+      # Check which default storage engine we have
+      echo -e "-> Create dump of $DATABASE database... \c"
+      if [ $ENGINE = "MyISAM" ]; then
+        $PMYSQLDUMP $MYISAM $GENERAL $DATABASE > $DATABASE".sql"
+      elif [ $ENGINE = "InnoDB" ]; then
+        $PMYSQLDUMP $INNODB $GENERAL $DATABASE > $DATABASE".sql"
+      else
+        $PMYSQLDUMP $NONE $GENERAL $DATABASE > $DATABASE".sql"
+      fi
+      echo -e "OK!\n"
+    }
+    ### Database dump - END ###
+    
     # Optimize the database before dumping it
     if [ $DATABASE != "All" ]; then
       echo -e "-> Optimizing of $DATABASE database... \c"
       $PMYSQLDUMP $GENERAL --add-drop-table --no-data $DATABASE | grep ^DROP | sed 's/DROP TABLE IF EXISTS/OPTIMIZE TABLE/g' | $PMYSQL $GENERAL $DATABASE > /dev/null
       echo "OK!"
-    fi
-    
-    # Check which default storage engine we have
-    echo -e "-> Create dump of $DATABASE database(s)... \c"
-    if [ $ENGINE = "MyISAM" ]; then
-      if [ $DATABASE = "All" ]; then
-        DATABASE="all_databases"
-        $PMYSQLDUMP $MYISAM $GENERAL --all-databases > $DATABASE".sql"
-      else
-        $PMYSQLDUMP $MYISAM $GENERAL $DATABASE > $DATABASE".sql"
-      fi
-    elif [ $ENGINE = "InnoDB" ]; then
-      if [ $DATABASE = "All" ]; then
-        DATABASE="all_databases"
-        $PMYSQLDUMP $INNODB $GENERAL --all-databases > $DATABASE".sql"
-      else
-        $PMYSQLDUMP $INNODB $GENERAL $DATABASE > $DATABASE".sql"
-      fi
+      createDatabaseDump $DATABASE
     else
-      if [ $DATABASE = "All" ]; then
-        DATABASE="all_databases"
-        $PMYSQLDUMP $NONE $GENERAL --all-databases > $DATABASE".sql"
-      else
-        $PMYSQLDUMP $NONE $GENERAL $DATABASE > $DATABASE".sql"
-      fi
+      # Based on „Shell Script To Backup MySql Database Server“ by Vivek Gite
+      # http://bash.cyberciti.biz/backup/backup-mysql-database-server-2/
+      
+      # More than one database: DBSKIP="database1 database2 database3"
+      DBSKIP="information_schema"
+      
+      DBLIST=$($PMYSQL $GENERAL -Bse 'show databases')
+      
+      for db in $DBLIST
+      do
+        skipdb=-1
+          
+        if [ $DBSKIP != "" ]; then
+      	  for i in $DBSKIP
+      	  do
+      	    [ $db == $i ] && skipdb=1 || :
+      	  done
+        fi
+       
+        if [ $skipdb == "-1" ] ; then
+          echo -e "-> Optimizing of $db database... \c"
+          $PMYSQLDUMP $GENERAL --add-drop-table --no-data $db| grep ^DROP | sed 's/DROP TABLE IF EXISTS/OPTIMIZE TABLE/g' | $PMYSQL $GENERAL $db > /dev/null
+          echo "OK!"
+          createDatabaseDump $db
+        fi
+      done
     fi
-    echo -e "OK!\n"
   done
   
     # Set the correct compression level
@@ -269,7 +289,9 @@ clean ()
   if [ $BACKUP_TYPE != "Files" ]; then
     find $BACKUP_PATH$BACKUP_PATH_DATABASE"/" -mtime +$CLEAN -delete
   fi
-  find $BACKUP_PATH$BACKUP_PATH_FILES"/" -mtime +$CLEAN -delete
+  if [ $BACKUP_TYPE != "Database" ]; then
+    find $BACKUP_PATH$BACKUP_PATH_FILES"/" -mtime +$CLEAN -delete
+  fi
   echo -e "OK!\n"
 }
 ## Clean - END ##
