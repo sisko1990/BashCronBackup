@@ -2,7 +2,7 @@
 
 #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++#
 #      Name: CronBackup                                                        #
-#   Version: 1.0 ($Id$)       #
+#   Version: 1.0 ($Id$)      #
 #    Author: Jan Erik Zassenhaus (sisko1990@users.sourceforge.net)             #
 # Copyright: Copyright (C) 2010 Jan Erik Zassenhaus. All rights reserved.      #
 #   License: GNU/GPL, see LICENSE.txt                                          #
@@ -78,14 +78,16 @@ COMPRESS_LEVEL_DATABASE="9"
 ##   2. The username to get access to the database.                           ##
 ##   3. The password to get access to the database.                           ##
 ##   4. The name of the database. (or "All")                                  ##
-##   5. The default storage engine of the database.                           ##
+##   5. Should the database be repaired? ("Yes" or "No")                      ##
+##   6. Should the database be optimized? ("Yes" or "No")                     ##
+##   7. The default storage engine of the database.                           ##
 ##      ("MyISAM", "InnoDB" or "None")                                        ##
 ################################################################################
-DB_DATA[0]="host1|username1|password1|database1|MyISAM"
+DB_DATA[0]="host1|username1|password1|database1|Yes|Yes|MyISAM"
 
 # More examples:
-#DB_DATA[1]="host2|username2|password2|database2|InnoDB"
-#DB_DATA[2]="host3|username3|password3|database3|None"
+#DB_DATA[1]="host2|username2|password2|database2|Yes|No|InnoDB"
+#DB_DATA[2]="host3|username3|password3|database3|No|Yes|None"
 
 ############################# DATABASE: BACKUP PATH ############################
 ## Where to save the database backup to.                                      ##
@@ -147,7 +149,9 @@ createDatabaseBackup ()
     USERNAME=`echo $db | cut -d "|" -f2`
     PASSWORD=`echo $db | cut -d "|" -f3`
     DATABASE=`echo $db | cut -d "|" -f4`
-    ENGINE=`echo $db | cut -d "|" -f5`
+    REPAIR=`echo $db | cut -d "|" -f5`
+    OPTIMIZE=`echo $db | cut -d "|" -f6`
+    ENGINE=`echo $db | cut -d "|" -f7`
     
     # Create directory if it does not exist
     mkdir -p $BACKUP_PATH$BACKUP_PATH_DATABASE"/tmp"
@@ -179,11 +183,18 @@ createDatabaseBackup ()
     }
     ### Database dump - END ###
     
-    # Optimize the database before dumping it
+    # Repair & optimize the database before dumping it
     if [ $DATABASE != "All" ]; then
-      echo -e "-> Optimizing of $DATABASE database... \c"
-      $PMYSQLDUMP $GENERAL --add-drop-table --no-data $DATABASE | grep ^DROP | sed 's/DROP TABLE IF EXISTS/OPTIMIZE TABLE/g' | $PMYSQL $GENERAL $DATABASE > /dev/null
-      echo "OK!"
+      if [ $REPAIR == "Yes" ]; then
+        echo -e "-> Repairing of $DATABASE database... \c"
+        $PMYSQLDUMP $GENERAL --add-drop-table --no-data $DATABASE | grep ^DROP | sed 's/DROP TABLE IF EXISTS/REPAIR TABLE/g' | $PMYSQL $GENERAL $DATABASE > /dev/null
+        echo "OK!"
+      fi
+      if [ $OPTIMIZE == "Yes" ]; then
+        echo -e "-> Optimizing of $DATABASE database... \c"
+        $PMYSQLDUMP $GENERAL --add-drop-table --no-data $DATABASE | grep ^DROP | sed 's/DROP TABLE IF EXISTS/OPTIMIZE TABLE/g' | $PMYSQL $GENERAL $DATABASE > /dev/null
+        echo "OK!"
+      fi
       createDatabaseDump $DATABASE
     else
       # Based on „Shell Script To Backup MySql Database Server“ by Vivek Gite
@@ -206,9 +217,16 @@ createDatabaseBackup ()
         fi
        
         if [ $skipdb == "-1" ] ; then
-          echo -e "-> Optimizing of $db database... \c"
-          $PMYSQLDUMP $GENERAL --add-drop-table --no-data $db| grep ^DROP | sed 's/DROP TABLE IF EXISTS/OPTIMIZE TABLE/g' | $PMYSQL $GENERAL $db > /dev/null
-          echo "OK!"
+          if [ $REPAIR == "Yes" ]; then
+            echo -e "-> Repairing of $db database... \c"
+            $PMYSQLDUMP $GENERAL --add-drop-table --no-data $db| grep ^DROP | sed 's/DROP TABLE IF EXISTS/REPAIR TABLE/g' | $PMYSQL $GENERAL $db > /dev/null
+            echo "OK!"
+          fi
+          if [ $OPTIMIZE == "Yes" ]; then
+            echo -e "-> Optimizing of $db database... \c"
+            $PMYSQLDUMP $GENERAL --add-drop-table --no-data $db| grep ^DROP | sed 's/DROP TABLE IF EXISTS/OPTIMIZE TABLE/g' | $PMYSQL $GENERAL $db > /dev/null
+            echo "OK!"
+          fi
           createDatabaseDump $db
         fi
       done
