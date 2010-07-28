@@ -139,7 +139,7 @@ PBZIP2=$(which bzip2 2> /dev/null)
 
 # Functions - START #
 ## Database backup - START ##
-createDatabaseBackup ()
+function createDatabaseBackup ()
 {
   echo "--- DATABASE(S) ---"
   for db in ${DB_DATA[@]}
@@ -166,7 +166,7 @@ createDatabaseBackup ()
     GENERAL="-h$HOST -u$USERNAME -p$PASSWORD"
     
     ### Database dump - START ###
-    createDatabaseDump()
+    function createDatabaseDump()
     {
       DATABASE=$1
       
@@ -264,7 +264,7 @@ createDatabaseBackup ()
 ## Database backup - END ##
 
 ## Files backup - START ##
-createFilesBackup ()
+function createFilesBackup ()
 {
   echo "--- FILE(S) / FOLDER(S) ---"
   
@@ -299,7 +299,7 @@ createFilesBackup ()
 ## Files backup - END ##
 
 ## Clean - START ##
-clean ()
+function clean ()
 {
   echo "--- CLEAN ---"
   
@@ -315,7 +315,7 @@ clean ()
 ## Clean - END ##
 
 ## Header - START ##
-header ()
+function header ()
 {
   echo "########################################################################"
   echo "###      BashCronBackup Copyright (C) 2010 Jan Erik Zassenhaus       ###"
@@ -323,35 +323,55 @@ header ()
   echo -e "########################################################################\n"
 }
 ## Header - END ##
+## Clean up (Lock file) - START ##
+function cleanLock ()
+{
+	# Perform program exit housekeeping
+	rm -f $SCRIPT".lock"
+	exit
+}
+## Clean up (Lock file) - END ##
 # Functions - END #
 
+# Absolute path to this script. /home/user/bin/foo.sh
+SCRIPT=$(readlink -f $0)
+
+# Get sure that the .lock file will be deleted on errors
+trap cleanLock SIGHUP SIGINT SIGTERM
 
 # The programme logic and some output - START #
-if [ $BACKUP_TYPE = "Both" ]; then
+if [ -f $SCRIPT".lock" ]; then
   header
-  createDatabaseBackup
-  createFilesBackup
-  if [ $CLEAN != "No" ]; then
-    clean
-  fi
-  exit 0
-elif [ $BACKUP_TYPE = "Files" ]; then
-  header
-  createFilesBackup
-  if [ $CLEAN != "No" ]; then
-    clean
-  fi
-  exit 0
-elif [ $BACKUP_TYPE = "Database" ]; then
-  header
-  createDatabaseBackup
-  if [ $CLEAN != "No" ]; then
-    clean
-  fi
-  exit 0
+	echo -e "-> Lockfile found! [$SCRIPT.lock]\n-> Maybe another process is already running?\n-> Execution of programme aborted!"
 else
-  header
-  echo "ERROR!: The backup type seems wrong!"
-  exit 1
+  # Create a .lock file during work
+  touch $SCRIPT".lock"
+  
+  if [ $BACKUP_TYPE = "Both" ]; then
+    header
+    createDatabaseBackup
+    createFilesBackup
+    if [ $CLEAN != "No" ]; then
+      clean
+    fi
+  elif [ $BACKUP_TYPE = "Files" ]; then
+    header
+    createFilesBackup
+    if [ $CLEAN != "No" ]; then
+      clean
+    fi
+  elif [ $BACKUP_TYPE = "Database" ]; then
+    header
+    createDatabaseBackup
+    if [ $CLEAN != "No" ]; then
+      clean
+    fi
+  else
+    header
+    echo "ERROR!: The backup type seems wrong!"
+  fi
+
+  # Delete .lock file on finish and exit
+  cleanLock
 fi
 # The programme logic and some output - END #
