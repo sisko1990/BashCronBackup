@@ -1,25 +1,25 @@
 #!/bin/bash
 
 #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++#
-#      Name: CronBackup                                                        #
-#   Version: 1.0 ($Id$)      #
+#      Name: Bash Cron Backup (BCB)                                            #
+#   Version: 1.1 ($Id$)      #
 #    Author: Jan Erik Zassenhaus (sisko1990@users.sourceforge.net)             #
 # Copyright: Copyright (C) 2010 Jan Erik Zassenhaus. All rights reserved.      #
 #   License: GNU/GPL, see LICENSE.txt                                          #
 #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++#
-# This file is part of the CronBackup project.                                 #
+# This file is part of the Bash Cron Backup project.                           #
 #                                                                              #
-# CronBackup is free software: you can redistribute it and/or modify           #
+# Bash Cron Backup is free software: you can redistribute it and/or modify     #
 # it under the terms of the GNU General Public License v3 as published         #
 # by the Free Software Foundation.                                             #
 #                                                                              #
-# CronBackup is distributed in the hope that it will be useful,                #
+# Bash Cron Backup is distributed in the hope that it will be useful,          #
 # but WITHOUT ANY WARRANTY; without even the implied warranty of               #
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the                 #
 # GNU General Public License for more details.                                 #
 #                                                                              #
 # You should have received a copy of the GNU General Public License            #
-# along with CronBackup. If not, see: http://www.gnu.org/licenses/.            #
+# along with Bash Cron Backup. If not, see: http://www.gnu.org/licenses/.      #
 #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++#
 
 
@@ -245,11 +245,11 @@ function createDatabaseBackup ()
     if [ $ARCHIVE_TYPE_DATABASE = "Zip" ]; then
       $PZIP -q $LEV "../"$(date +%F"_"%H"-"%M)".zip" *
     elif [ $ARCHIVE_TYPE_DATABASE = "Tar" ]; then
-      $PTAR --group 0 --owner 0 -cf "../"$(date +%F"_"%H"-"%M)".tar" *
+      $PTAR -cf "../"$(date +%F"_"%H"-"%M)".tar" *
     elif [ $ARCHIVE_TYPE_DATABASE = "Gzip" ]; then
-      $PTAR --group 0 --owner 0 -cf - * | $PGZIP $LEV > "../"$(date +%F"_"%H"-"%M)".tar.gz"
+      $PTAR -cf - * | $PGZIP $LEV > "../"$(date +%F"_"%H"-"%M)".tar.gz"
     elif [ $ARCHIVE_TYPE_DATABASE = "Bzip2" ]; then
-      $PTAR --group 0 --owner 0 -cf - * | $PGZIP $LEV > "../"$(date +%F"_"%H"-"%M)".tar.bz2"
+      $PTAR -cf - * | $PGZIP $LEV > "../"$(date +%F"_"%H"-"%M)".tar.bz2"
     else
       echo "ERROR!: The database archive type seems wrong!"
     fi
@@ -286,11 +286,11 @@ function createFilesBackup ()
   if [ $ARCHIVE_TYPE_FILES = "Zip" ]; then
     $PZIP -qr $LEV $BACKUP_PATH$BACKUP_PATH_FILES"/"$(date +%F"_"%H"-"%M)".zip" $BACKUP_FILES
   elif [ $ARCHIVE_TYPE_FILES = "Tar" ]; then
-    $PTAR --group 0 --owner 0 -cf $BACKUP_PATH$BACKUP_PATH_FILES"/"$(date +%F"_"%H"-"%M)".tar" $BACKUP_FILES
+    $PTAR -cf $BACKUP_PATH$BACKUP_PATH_FILES"/"$(date +%F"_"%H"-"%M)".tar" $BACKUP_FILES
   elif [ $ARCHIVE_TYPE_FILES = "Gzip" ]; then
-    $PTAR --group 0 --owner 0 -cf - $BACKUP_FILES | $PGZIP $LEV > $BACKUP_PATH$BACKUP_PATH_FILES"/"$(date +%F"_"%H"-"%M)".tar.gz"
+    $PTAR -cf - $BACKUP_FILES | $PGZIP $LEV > $BACKUP_PATH$BACKUP_PATH_FILES"/"$(date +%F"_"%H"-"%M)".tar.gz"
   elif [ $ARCHIVE_TYPE_FILES = "Bzip2" ]; then
-    $PTAR --group 0 --owner 0 -cf - $BACKUP_FILES | $PGZIP $LEV > $BACKUP_PATH$BACKUP_PATH_FILES"/"$(date +%F"_"%H"-"%M)".tar.bz2"
+    $PTAR -cf - $BACKUP_FILES | $PGZIP $LEV > $BACKUP_PATH$BACKUP_PATH_FILES"/"$(date +%F"_"%H"-"%M)".tar.bz2"
   else
     echo "ERROR!: The files archive type seems wrong!"
   fi
@@ -319,7 +319,7 @@ function header ()
 {
   clear
   echo "########################################################################"
-  echo "###      BashCronBackup Copyright (C) 2010 Jan Erik Zassenhaus       ###"
+  echo "###     Bash Cron Backup; Copyright (C) 2010 Jan Erik Zassenhaus     ###"
   echo "### This program comes with ABSOLUTELY NO WARRANTY! License: GNU/GPL ###"
   echo -e "########################################################################\n"
 }
@@ -339,11 +339,13 @@ SCRIPT=$(readlink -f $0)
 
 # Get sure that the .lock file will be deleted on errors
 trap cleanLock SIGHUP SIGINT SIGTERM
+# Delete lockfile if it is older than 90 minutes
+find $SCRIPT".lock" -mmin +91 -delete 2> /dev/null
 
 # The programme logic and some output - START #
 if [ -f $SCRIPT".lock" ]; then
   header
-	echo -e "-> Lockfile found! [$SCRIPT.lock]\n-> Maybe another process is already running?\n-> Execution of programme aborted!"
+	echo -e "-> Lockfile found! [$SCRIPT.lock]\n-> Maybe another process is already running?\n-> Execution of program aborted!"
 else
   # Create a .lock file during work
   touch $SCRIPT".lock"
