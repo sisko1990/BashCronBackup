@@ -61,7 +61,7 @@ ARCHIVE_TYPE_DATABASE="Bzip2"
 ## Please note: This function is not available for "Tar" archives!            ##
 ## Available levels: "1" till "9". To use system default enter "0".           ##
 ################################################################################
-COMPRESS_LEVEL_FILES="5"
+COMPRESS_LEVEL_FILES="1"
 COMPRESS_LEVEL_DATABASE="9"
 
 ################################################################################
@@ -124,8 +124,8 @@ BACKUP_PATH_FILES="/files"
 
 
 #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++#
-#+++++++++++++++++++++++++++++++++ NO CHANGES! ++++++++++++++++++++++++++++++++#
-#++++++++++++++++++++++++ UNLESS YOU KNOW WHAT YOU DO! ++++++++++++++++++++++++#
+#++++++++++++++++++++++++++++ HEREAFTER NO CHANGES ++++++++++++++++++++++++++++#
+#+++++++++++++++++ EXCEPT YOU REALLY KNOW WHAT YOU ARE DOING! +++++++++++++++++#
 #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++#
 
 # Linux bin paths - Change them if it cannot be autodetected via "which" command
@@ -245,11 +245,11 @@ function createDatabaseBackup ()
     if [ $ARCHIVE_TYPE_DATABASE = "Zip" ]; then
       $PZIP -q $LEV "../"$(date +%F"_"%H"-"%M)".zip" *
     elif [ $ARCHIVE_TYPE_DATABASE = "Tar" ]; then
-      $PTAR -cf "../"$(date +%F"_"%H"-"%M)".tar" *
+      $PTAR --group 0 --owner 0 -cf "../"$(date +%F"_"%H"-"%M)".tar" *
     elif [ $ARCHIVE_TYPE_DATABASE = "Gzip" ]; then
-      $PTAR -cf - * | $PGZIP $LEV > "../"$(date +%F"_"%H"-"%M)".tar.gz"
+      $PTAR --group 0 --owner 0 -cf - * | $PGZIP $LEV > "../"$(date +%F"_"%H"-"%M)".tar.gz"
     elif [ $ARCHIVE_TYPE_DATABASE = "Bzip2" ]; then
-      $PTAR -cf - * | $PGZIP $LEV > "../"$(date +%F"_"%H"-"%M)".tar.bz2"
+      $PTAR --group 0 --owner 0 -cf - * | $PGZIP $LEV > "../"$(date +%F"_"%H"-"%M)".tar.bz2"
     else
       echo "ERROR!: The database archive type seems wrong!"
     fi
@@ -286,11 +286,11 @@ function createFilesBackup ()
   if [ $ARCHIVE_TYPE_FILES = "Zip" ]; then
     $PZIP -qr $LEV $BACKUP_PATH$BACKUP_PATH_FILES"/"$(date +%F"_"%H"-"%M)".zip" $BACKUP_FILES
   elif [ $ARCHIVE_TYPE_FILES = "Tar" ]; then
-    $PTAR -cf $BACKUP_PATH$BACKUP_PATH_FILES"/"$(date +%F"_"%H"-"%M)".tar" $BACKUP_FILES
+    $PTAR --group 0 --owner 0 -cf $BACKUP_PATH$BACKUP_PATH_FILES"/"$(date +%F"_"%H"-"%M)".tar" $BACKUP_FILES
   elif [ $ARCHIVE_TYPE_FILES = "Gzip" ]; then
-    $PTAR -cf - $BACKUP_FILES | $PGZIP $LEV > $BACKUP_PATH$BACKUP_PATH_FILES"/"$(date +%F"_"%H"-"%M)".tar.gz"
+    $PTAR --group 0 --owner 0 -cf - $BACKUP_FILES | $PGZIP $LEV > $BACKUP_PATH$BACKUP_PATH_FILES"/"$(date +%F"_"%H"-"%M)".tar.gz"
   elif [ $ARCHIVE_TYPE_FILES = "Bzip2" ]; then
-    $PTAR -cf - $BACKUP_FILES | $PGZIP $LEV > $BACKUP_PATH$BACKUP_PATH_FILES"/"$(date +%F"_"%H"-"%M)".tar.bz2"
+    $PTAR --group 0 --owner 0 -cf - $BACKUP_FILES | $PGZIP $LEV > $BACKUP_PATH$BACKUP_PATH_FILES"/"$(date +%F"_"%H"-"%M)".tar.bz2"
   else
     echo "ERROR!: The files archive type seems wrong!"
   fi
@@ -317,6 +317,7 @@ function clean ()
 ## Header - START ##
 function header ()
 {
+  clear
   echo "########################################################################"
   echo "###      BashCronBackup Copyright (C) 2010 Jan Erik Zassenhaus       ###"
   echo "### This program comes with ABSOLUTELY NO WARRANTY! License: GNU/GPL ###"
