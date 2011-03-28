@@ -61,8 +61,8 @@ ARCHIVE_TYPE_DATABASE="Bzip2"
 ## Please note: This function is not available for "Tar" archives!            ##
 ## Available levels: "1" till "9". To use system default enter "0".           ##
 ################################################################################
-COMPRESS_LEVEL_FILES="1"
-COMPRESS_LEVEL_DATABASE="9"
+COMPRESS_LEVEL_FILES="5"
+COMPRESS_LEVEL_DATABASE="5"
 
 ################################################################################
 
