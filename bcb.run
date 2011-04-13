@@ -1,0 +1,25 @@
+#!/bin/bash
+#===============================================================================
+#
+#          FILE: bcb.run 
+# 
+#         USAGE:  ./bcb.run
+# 
+#   DESCRIPTION:  
+# 
+#       OPTIONS:  ---
+#  REQUIREMENTS:  ---
+#        AUTHOR: Jan Erik Zassenhaus (sisko1990@users.sourceforge.net) 
+#      REVISION: $Id
+#===============================================================================
+
+# Treat unset variables as an error
+set -o nounset
+
+# Include the paths and some other files
+if [ -x "helpers/paths.sh" ]; then
+  source "helpers/paths.sh"
+else
+  echo "The file \"helpers/paths.sh\" cannot be included!"
+  exit 1
+fi
